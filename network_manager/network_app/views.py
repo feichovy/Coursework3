@@ -161,7 +161,7 @@ def config_ospf(request):
             # 连接到设备进行配置
             network_device = {
                 'device_type': 'cisco_ios',
-                'host': ip,
+                'ip': ip,
                 'username': username,
                 'password': password,
                 'secret': secret
