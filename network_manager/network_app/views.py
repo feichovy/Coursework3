@@ -45,43 +45,57 @@ def read_config(file_path):
         return {}
 
 # 配置设备接口视图
-def config_device(request):
-    # 读取配置文件
-    config = read_config(CONFIG_FILE_PATH)
+def config_ospf(request):
+    # 尝试读取配置文件
+    config = {}
+    if os.path.exists(CONFIG_FILE_PATH):
+        with open(CONFIG_FILE_PATH, 'r') as f:
+            config = json.load(f)
 
-    # 使用配置文件中的设备信息进行表单初始填充
-    if 'devices' not in config or len(config['devices']) == 0:
-        messages.error(request, "Configuration file is missing valid 'devices' data. Please check the configuration file.")
-        return render(request, 'network_app/config_device.html', {'form': DeviceConfigForm()})
+    # 设置默认值，如果配置文件中没有提供
+    config_defaults = {
+        'device_ip': '192.168.56.104',
+        'username': 'admin',
+        'password': 'defaultpassword',
+        'enable_secret': '',
+        'ospf_process_id': '1',
+        'ospf_network': '192.168.56.0',
+        'wildcard_mask': '0.0.0.255',
+        'ospf_area': '0',
+    }
 
-    device = config['devices'][0]  # 假设只有一个设备的情况
+    # 如果缺少必要配置，用默认值进行补充
+    for key, value in config_defaults.items():
+        if key not in config:
+            config[key] = value
 
     if request.method == 'POST':
-        form = DeviceConfigForm(request.POST)
+        form = OSPFConfigForm(request.POST)
         if form.is_valid():
             # 获取表单数据
-            ip = form.cleaned_data['ip']
+            device_ip = form.cleaned_data['device_ip']
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
-            secret = form.cleaned_data['secret']
-            interface = form.cleaned_data['interface']
-            ip_addr = form.cleaned_data['ip_addr']
-            mask = form.cleaned_data['mask']
+            enable_secret = form.cleaned_data['enable_secret']
+            ospf_process_id = form.cleaned_data['ospf_process_id']
+            ospf_network = form.cleaned_data['ospf_network']
+            wildcard_mask = form.cleaned_data['wildcard_mask']
+            ospf_area = form.cleaned_data['ospf_area']
 
-            # 使用 Netmiko 连接到设备并配置接口
+            # 配置 OSPF 的命令
+            commands = [
+                f"router ospf {ospf_process_id}",
+                f"network {ospf_network} {wildcard_mask} area {ospf_area}"
+            ]
+
+            # 使用 Netmiko 连接到设备
             network_device = {
                 'device_type': 'cisco_ios',
-                'host': ip,
+                'host': device_ip,
                 'username': username,
                 'password': password,
-                'secret': secret
+                'secret': enable_secret
             }
-
-            commands = [
-                f"interface {interface}",
-                f"ip address {ip_addr} {mask}",
-                "no shutdown"
-            ]
 
             try:
                 connection = ConnectHandler(**network_device)
@@ -89,12 +103,12 @@ def config_device(request):
                 output = connection.send_config_set(commands)
                 connection.disconnect()
 
-                # 更新设备的 IP 地址到配置文件中的 'ip' 字段
-                device['ip'] = ip_addr
+                # 更新文件逻辑，例如 OSPF 成功配置可以更新某些信息到配置文件
+                config['device_ip'] = device_ip
                 with open(CONFIG_FILE_PATH, 'w') as file:
                     json.dump(config, file, indent=4)
 
-                messages.success(request, f"Interface Configuration successful: {output}")
+                messages.success(request, f"OSPF Configuration successful: {output}")
             except Exception as e:
                 messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
 
@@ -103,14 +117,18 @@ def config_device(request):
 
     else:
         # 初始化表单，填充默认值
-        form = DeviceConfigForm(initial={
-            'ip': device['ip'],
-            'username': device['username'],
-            'password': device['password'],
-            'secret': device['secret']
+        form = OSPFConfigForm(initial={
+            'device_ip': config['device_ip'],
+            'username': config['username'],
+            'password': config['password'],
+            'enable_secret': config['enable_secret'],
+            'ospf_process_id': config['ospf_process_id'],
+            'ospf_network': config['ospf_network'],
+            'wildcard_mask': config['wildcard_mask'],
+            'ospf_area': config['ospf_area']
         })
 
-    return render(request, 'network_app/config_device.html', {'form': form})
+    return render(request, 'network_app/config_ospf.html', {'form': form})
 
 def config_ospf(request):
     # 假设配置文件路径为 config.json
