@@ -1,46 +1,61 @@
-from django.shortcuts import render
-
-# Create your views here.
+import json
+import os
+from netmiko import ConnectHandler
 from django.shortcuts import render
 from django.http import HttpResponse
-from .forms import DeviceConfigForm
-from netmiko import ConnectHandler
+from .forms import DeviceConfigForm, OSPFConfigForm, IPSecConfigForm, ACLConfigForm
 
-# Create SSH connection and enter configure terminal
-def connect_to_device(username, ip, password, secret):
-    try:
-        network_device = {
-            'device_type': 'cisco_ios',
-            'host': ip,
-            'username': username,
-            'password': password,
-            'secret': secret
+# 配置文件路径
+CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), 'config.json')
+
+# 读取配置文件
+def read_config(file_path):
+    if not os.path.exists(file_path):
+        # 如果文件不存在，创建并写入默认配置
+        default_config = {
+            'devices': [
+                {
+                    'name': 'default_device',
+                    'ip': '192.168.56.1',
+                    'username': 'admin',
+                    'password': 'password',
+                    'connection_type': 'ssh',
+                    'secret': 'enable_password',
+                    'interfaces': {}
+                }
+            ]
         }
-        connection = ConnectHandler(**network_device)
-        connection.enable()
-        return connection, None
-    except Exception as e:
-        return None, f"Failed to connect via SSH: {str(e)}"
+        with open(file_path, 'w') as file:
+            json.dump(default_config, file, indent=4)
+        print(f"[INFO] Configuration file '{file_path}' has been created with default settings. Please modify it to fit your environment.")
+        return default_config
 
-# Configure Loopback0 & GigabitEthernet1
-def config_interface(connection, interface, ip, mask):
-    commands = [
-        f"interface {interface}",
-        f"ip address {ip} {mask}",
-        "no shutdown",
-    ]
+    # 如果文件存在，读取文件内容
     try:
-        connection.send_config_set(commands)
-        return f"[SUCCESS] {interface} configured with {ip}/{mask} successfully"
-    except Exception as e:
-        return f"[ERROR] Fail to configure {interface}: {str(e)}"
+        with open(file_path, 'r') as file:
+            config = json.load(file)
+        return config
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Failed to read configuration from '{file_path}': {str(e)}")
+        return {}
 
-# Django view for configuring device
+# 更新配置文件
+def write_config(file_path, config):
+    try:
+        with open(file_path, 'w') as file:
+            json.dump(config, file, indent=4)
+        print(f"[INFO] Configuration file '{file_path}' updated successfully.")
+    except Exception as e:
+        print(f"[ERROR] Failed to update configuration file '{file_path}': {str(e)}")
+
+# 配置接口视图
 def config_device(request):
+    config = read_config(CONFIG_FILE_PATH)
+    device = config['devices'][0]  # 假设只有一个设备的情况
+
     if request.method == 'POST':
         form = DeviceConfigForm(request.POST)
         if form.is_valid():
-            # 获取表单数据
             ip = form.cleaned_data['ip']
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
@@ -49,15 +64,44 @@ def config_device(request):
             ip_addr = form.cleaned_data['ip_addr']
             mask = form.cleaned_data['mask']
 
-            # 建立设备连接
-            connection, error_message = connect_to_device(username, ip, password, secret)
-            if connection:
-                result = config_interface(connection, interface, ip_addr, mask)
+            network_device = {
+                'device_type': 'cisco_ios',
+                'host': ip,
+                'username': username,
+                'password': password,
+                'secret': secret
+            }
+
+            commands = [
+                f"interface {interface}",
+                f"ip address {ip_addr} {mask}",
+                "no shutdown"
+            ]
+
+            try:
+                connection = ConnectHandler(**network_device)
+                connection.enable()
+                output = connection.send_config_set(commands)
                 connection.disconnect()
-                return HttpResponse(f"Configuration Result: {result}")
-            else:
-                return HttpResponse(f'[ERROR] Unable to connect to the device: {error_message}')
+
+                # 更新配置文件中的接口信息
+                device['interfaces'][interface] = {
+                    'ip': ip_addr,
+                    'mask': mask
+                }
+                write_config(CONFIG_FILE_PATH, config)
+
+                return HttpResponse(f"Configuration Result: {output}")
+            except Exception as e:
+                return HttpResponse(f"[ERROR] Could not connect to the router: {str(e)}")
+
     else:
-        form = DeviceConfigForm()
+        # 使用读取的配置文件信息作为表单初始值
+        form = DeviceConfigForm(initial={
+            'ip': device['ip'],
+            'username': device['username'],
+            'password': device['password'],
+            'secret': device['secret']
+        })
 
     return render(request, 'network_app/config_device.html', {'form': form})
