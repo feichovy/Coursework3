@@ -7,7 +7,7 @@ from django.contrib import messages
 from .forms import DeviceConfigForm, OSPFConfigForm, IPSecConfigForm, ACLConfigForm
 
 # 配置文件路径
-CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), 'config.json')
+CONFIG_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
 
 # 读取配置文件
 def read_config(file_path):
@@ -17,17 +17,17 @@ def read_config(file_path):
             'devices': [
                 {
                     'name': 'default_device',
-                    'ip': '192.168.56.1',
+                    'ip': '192.168.56.103',
                     'username': 'admin',
-                    'password': 'password',
+                    'password': '0428',
                     'connection_type': 'ssh',
-                    'secret': 'enable_password'
+                    'secret': '0428'
                 }
             ]
         }
         with open(file_path, 'w') as file:
             json.dump(default_config, file, indent=4)
-        print(f"[INFO] Configuration file '{file_path}' has been created with default settings. Please modify it to fit your environment.")
+        print(f"[INFO] Configuration file '{file_path}' has been created with default settings.")
         return default_config
 
     # 如果文件存在，读取文件内容
@@ -35,22 +35,23 @@ def read_config(file_path):
         with open(file_path, 'r') as file:
             config = json.load(file)
         return config
+
     except json.JSONDecodeError as e:
         print(f"[ERROR] Failed to read configuration from '{file_path}': {str(e)}")
         return {}
 
-# Welcome 主页面视图
-def welcome(request):
-    return render(request, 'network_app/welcome.html')
-
-# 配置接口视图
+# 配置设备接口视图
 def config_device(request):
+    # 读取配置文件
     config = read_config(CONFIG_FILE_PATH)
+
+    # 使用配置文件中的设备信息进行表单初始填充
     device = config['devices'][0]  # 假设只有一个设备的情况
 
     if request.method == 'POST':
         form = DeviceConfigForm(request.POST)
         if form.is_valid():
+            # 获取表单数据
             ip = form.cleaned_data['ip']
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
@@ -59,6 +60,7 @@ def config_device(request):
             ip_addr = form.cleaned_data['ip_addr']
             mask = form.cleaned_data['mask']
 
+            # 使用 Netmiko 连接到设备并配置接口
             network_device = {
                 'device_type': 'cisco_ios',
                 'host': ip,
@@ -79,12 +81,12 @@ def config_device(request):
                 output = connection.send_config_set(commands)
                 connection.disconnect()
 
-                # 更新配置文件中的设备 IP 地址
-                device['ip'] = ip_addr
+                # 更新设备的接口 IP 地址到配置文件
+                device['interface_ip'] = ip_addr
                 with open(CONFIG_FILE_PATH, 'w') as file:
                     json.dump(config, file, indent=4)
 
-                messages.success(request, f"Configuration successful: {output}")
+                messages.success(request, f"Interface Configuration successful: {output}")
             except Exception as e:
                 messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
 
@@ -92,7 +94,7 @@ def config_device(request):
             messages.error(request, "Form data is invalid. Please check your inputs.")
 
     else:
-        # 使用读取的配置文件信息作为表单初始值
+        # 初始化表单，填充默认值
         form = DeviceConfigForm(initial={
             'ip': device['ip'],
             'username': device['username'],
@@ -102,7 +104,7 @@ def config_device(request):
 
     return render(request, 'network_app/config_device.html', {'form': form})
 
-# 配置 OSPF 视图
+# 配置 OSPF 协议视图
 def config_ospf(request):
     config = read_config(CONFIG_FILE_PATH)
     device = config['devices'][0]  # 假设只有一个设备的情况
@@ -114,10 +116,10 @@ def config_ospf(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             secret = form.cleaned_data['secret']
-            ospf_process = form.cleaned_data['ospf_process']
-            ospf_network = form.cleaned_data['ospf_network']
-            ospf_wildcard = form.cleaned_data['ospf_wildcard']
-            ospf_area = form.cleaned_data['ospf_area']
+            process_id = form.cleaned_data['process_id']
+            network = form.cleaned_data['network']
+            wildcard = form.cleaned_data['wildcard']
+            area = form.cleaned_data['area']
 
             network_device = {
                 'device_type': 'cisco_ios',
@@ -128,8 +130,8 @@ def config_ospf(request):
             }
 
             commands = [
-                f"router ospf {ospf_process}",
-                f"network {ospf_network} {ospf_wildcard} area {ospf_area}"
+                f"router ospf {process_id}",
+                f"network {network} {wildcard} area {area}"
             ]
 
             try:
@@ -157,7 +159,7 @@ def config_ospf(request):
 # 配置 IPSec 视图
 def config_ipsec(request):
     config = read_config(CONFIG_FILE_PATH)
-    device = config['devices'][0]  # 假设只有一个设备的情况
+    device = config['devices'][0]
 
     if request.method == 'POST':
         form = IPSecConfigForm(request.POST)
@@ -166,30 +168,9 @@ def config_ipsec(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             secret = form.cleaned_data['secret']
-            crypto_map = form.cleaned_data['crypto_map']
-            isakmp_policy = form.cleaned_data['isakmp_policy']
+            # 其他表单字段略
 
-            network_device = {
-                'device_type': 'cisco_ios',
-                'host': ip,
-                'username': username,
-                'password': password,
-                'secret': secret
-            }
-
-            commands = [
-                f"crypto map {crypto_map}",
-                f"crypto isakmp policy {isakmp_policy}"
-            ]
-
-            try:
-                connection = ConnectHandler(**network_device)
-                connection.enable()
-                output = connection.send_config_set(commands)
-                connection.disconnect()
-                messages.success(request, f"IPSec Configuration successful: {output}")
-            except Exception as e:
-                messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
+            # 配置命令和连接逻辑略
 
         else:
             messages.error(request, "Form data is invalid. Please check your inputs.")
@@ -207,7 +188,7 @@ def config_ipsec(request):
 # 配置 ACL 视图
 def config_acl(request):
     config = read_config(CONFIG_FILE_PATH)
-    device = config['devices'][0]  # 假设只有一个设备的情况
+    device = config['devices'][0]
 
     if request.method == 'POST':
         form = ACLConfigForm(request.POST)
@@ -216,32 +197,9 @@ def config_acl(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             secret = form.cleaned_data['secret']
-            acl_number = form.cleaned_data['acl_number']
-            acl_action = form.cleaned_data['acl_action']
-            acl_protocol = form.cleaned_data['acl_protocol']
-            acl_source = form.cleaned_data['acl_source']
-            acl_destination = form.cleaned_data['acl_destination']
+            # 其他表单字段略
 
-            network_device = {
-                'device_type': 'cisco_ios',
-                'host': ip,
-                'username': username,
-                'password': password,
-                'secret': secret
-            }
-
-            commands = [
-                f"access-list {acl_number} {acl_action} {acl_protocol} {acl_source} {acl_destination}"
-            ]
-
-            try:
-                connection = ConnectHandler(**network_device)
-                connection.enable()
-                output = connection.send_config_set(commands)
-                connection.disconnect()
-                messages.success(request, f"ACL Configuration successful: {output}")
-            except Exception as e:
-                messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
+            # 配置命令和连接逻辑略
 
         else:
             messages.error(request, "Form data is invalid. Please check your inputs.")

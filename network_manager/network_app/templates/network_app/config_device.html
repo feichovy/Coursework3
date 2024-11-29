@@ -23,8 +23,14 @@
 
         <form method="post">
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary">Submit Configuration</button>
+            {{ form.ip.label }} {{ form.ip }}
+            {{ form.username.label }} {{ form.username }}
+            {{ form.password.label }} {{ form.password }}
+            {{ form.secret.label }} {{ form.secret }}
+            {{ form.interface.label }} {{ form.interface }}
+            {{ form.ip_addr.label }} {{ form.ip_addr }}
+            {{ form.mask.label }} {{ form.mask }}
+            <button type="submit" class="btn btn-primary mt-3">Submit Configuration</button>
         </form>
     </div>
 </body>
