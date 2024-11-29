@@ -9,6 +9,10 @@ from .forms import DeviceConfigForm, OSPFConfigForm, IPSecConfigForm, ACLConfigF
 # 配置文件路径
 CONFIG_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
 
+# Welcome interface Function
+def welcome(request):
+    return render(request, 'network_app/welcome.html')
+
 # 读取配置文件
 def read_config(file_path):
     if not os.path.exists(file_path):
