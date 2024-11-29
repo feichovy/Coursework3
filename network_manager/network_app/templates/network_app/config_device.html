@@ -9,13 +9,23 @@
 <body>
     <div class="container mt-5">
         <h2 class="text-center mb-4">Configure Network Device Interface</h2>
-        <div class="card shadow p-4">
-            <form method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-primary btn-block mt-3">Submit Configuration</button>
-            </form>
-        </div>
+
+        <!-- 添加反馈消息部分 -->
+        {% if messages %}
+            <div class="container mt-3">
+                {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Submit Configuration</button>
+        </form>
     </div>
 </body>
 </html>

@@ -3,6 +3,7 @@ import os
 from netmiko import ConnectHandler
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.contrib import messages
 from .forms import DeviceConfigForm, OSPFConfigForm, IPSecConfigForm, ACLConfigForm
 
 # 配置文件路径
@@ -83,9 +84,12 @@ def config_device(request):
                 with open(CONFIG_FILE_PATH, 'w') as file:
                     json.dump(config, file, indent=4)
 
-                return HttpResponse(f"Configuration Result: {output}")
+                messages.success(request, f"Configuration successful: {output}")
             except Exception as e:
-                return HttpResponse(f"[ERROR] Could not connect to the router: {str(e)}")
+                messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
+
+        else:
+            messages.error(request, "Form data is invalid. Please check your inputs.")
 
     else:
         # 使用读取的配置文件信息作为表单初始值
@@ -133,9 +137,12 @@ def config_ospf(request):
                 connection.enable()
                 output = connection.send_config_set(commands)
                 connection.disconnect()
-                return HttpResponse(f"OSPF Configuration Result: {output}")
+                messages.success(request, f"OSPF Configuration successful: {output}")
             except Exception as e:
-                return HttpResponse(f"[ERROR] Could not connect to the router: {str(e)}")
+                messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
+
+        else:
+            messages.error(request, "Form data is invalid. Please check your inputs.")
 
     else:
         form = OSPFConfigForm(initial={
@@ -180,9 +187,12 @@ def config_ipsec(request):
                 connection.enable()
                 output = connection.send_config_set(commands)
                 connection.disconnect()
-                return HttpResponse(f"IPSec Configuration Result: {output}")
+                messages.success(request, f"IPSec Configuration successful: {output}")
             except Exception as e:
-                return HttpResponse(f"[ERROR] Could not connect to the router: {str(e)}")
+                messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
+
+        else:
+            messages.error(request, "Form data is invalid. Please check your inputs.")
 
     else:
         form = IPSecConfigForm(initial={
@@ -229,9 +239,12 @@ def config_acl(request):
                 connection.enable()
                 output = connection.send_config_set(commands)
                 connection.disconnect()
-                return HttpResponse(f"ACL Configuration Result: {output}")
+                messages.success(request, f"ACL Configuration successful: {output}")
             except Exception as e:
-                return HttpResponse(f"[ERROR] Could not connect to the router: {str(e)}")
+                messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
+
+        else:
+            messages.error(request, "Form data is invalid. Please check your inputs.")
 
     else:
         form = ACLConfigForm(initial={
