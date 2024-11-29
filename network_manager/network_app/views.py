@@ -45,7 +45,6 @@ def read_config(file_path):
         return {}
 
 # 配置设备接口视图
-# 配置设备接口视图
 def config_device(request):
     # 读取配置文件
     config = read_config(CONFIG_FILE_PATH)
@@ -113,9 +112,32 @@ def config_device(request):
 
     return render(request, 'network_app/config_device.html', {'form': form})
 
-def config_ospf(request):
-    config = read_config(CONFIG_FILE_PATH)
-    device = config['devices'][0]  # 假设只有一个设备
+def config_ospf_view(request):
+    # 假设配置文件路径为 config.json
+    config_file_path = 'config.json'
+    config_data = {}
+
+    # 尝试读取配置文件
+    if os.path.exists(config_file_path):
+        with open(config_file_path, 'r') as f:
+            config_data = json.load(f)
+
+    # 设置默认值，如果配置文件中没有提供
+    config_defaults = {
+        'device_ip': '192.168.56.104',
+        'username': 'admin',
+        'password': 'defaultpassword',
+        'enable_secret': '',
+        'ospf_process_id': '1',
+        'ospf_network': '192.168.56.0',
+        'wildcard_mask': '0.0.0.255',
+        'ospf_area': '0',
+    }
+
+    # 用默认值补充缺失的配置
+    for key, value in config_defaults.items():
+        if key not in config_data:
+            config_data[key] = value
 
     if request.method == 'POST':
         form = OSPFConfigForm(request.POST)
