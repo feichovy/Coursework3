@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views  # 这里的导入确保了从当前文件夹中导入 views 模块
+from . import views
 
 urlpatterns = [
     path('', views.welcome, name='home'),  # Welcome 主页面
