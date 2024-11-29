@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Network Manager</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Welcome to the Network Manager Project</h2>
+        <div class="list-group">
+            <a href="{% url 'config_device' %}" class="list-group-item list-group-item-action">Configure Network Device Interface</a>
+            <a href="{% url 'config_ospf' %}" class="list-group-item list-group-item-action">Configure OSPF</a>
+            <a href="{% url 'config_ipsec' %}" class="list-group-item list-group-item-action">Configure IPSec</a>
+            <a href="{% url 'config_acl' %}" class="list-group-item list-group-item-action">Configure ACL</a>
+        </div>
+    </div>
+</body>
+</html>
