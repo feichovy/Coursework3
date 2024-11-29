@@ -119,22 +119,21 @@ def config_ospf(request):
         with open(CONFIG_FILE_PATH, 'r') as f:
             config = json.load(f)
 
-    # 设置默认值，如果配置文件中没有提供
-    config_defaults = {
-        'device_ip': '192.168.56.104',
-        'username': 'admin',
-        'password': 'defaultpassword',
-        'enable_secret': '',
+    # 获取设备信息或设置为空字典
+    device_ip = config.get('ip', '')
+    enable_secret = config.get('secret', '')
+
+    # 初始化表单默认值
+    initial_data = {
+        'device_ip': device_ip,
+        'username': config.get('username', 'admin'),  # 取默认值为 'admin'
+        'password': config.get('password', 'defaultpassword'),
+        'enable_secret': enable_secret,
         'ospf_process_id': '1',
         'ospf_network': '192.168.56.0',
         'wildcard_mask': '0.0.0.255',
         'ospf_area': '0',
     }
-
-    # 如果缺少必要配置，用默认值进行补充
-    for key, value in config_defaults.items():
-        if key not in config:
-            config[key] = value
 
     if request.method == 'POST':
         form = OSPFConfigForm(request.POST)
@@ -170,11 +169,7 @@ def config_ospf(request):
                 output = connection.send_config_set(commands)
                 connection.disconnect()
 
-                # 更新文件逻辑，例如 OSPF 成功配置可以更新某些信息到配置文件
-                config['device_ip'] = device_ip
-                with open(CONFIG_FILE_PATH, 'w') as file:
-                    json.dump(config, file, indent=4)
-
+                # 成功配置的提示信息
                 messages.success(request, f"OSPF Configuration successful: {output}")
             except Exception as e:
                 messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
@@ -184,16 +179,7 @@ def config_ospf(request):
 
     else:
         # 初始化表单，填充默认值
-        form = OSPFConfigForm(initial={
-            'device_ip': config['device_ip'],
-            'username': config['username'],
-            'password': config['password'],
-            'enable_secret': config['enable_secret'],
-            'ospf_process_id': config['ospf_process_id'],
-            'ospf_network': config['ospf_network'],
-            'wildcard_mask': config['wildcard_mask'],
-            'ospf_area': config['ospf_area']
-        })
+        form = OSPFConfigForm(initial=initial_data)
 
     return render(request, 'network_app/config_ospf.html', {'form': form})
 
