@@ -15,11 +15,11 @@ class OSPFConfigForm(forms.Form):
     ip = forms.CharField(label='Device IP Address', max_length=100)
     username = forms.CharField(label='Username', max_length=100)
     password = forms.CharField(label='Password', widget=forms.PasswordInput)
-    secret = forms.CharField(label='Enable Secret', max_length=100, widget=forms.PasswordInput)
-    ospf_process = forms.CharField(label='OSPF Process ID', max_length=50)
-    ospf_network = forms.CharField(label='OSPF Network', max_length=100)
-    ospf_wildcard = forms.CharField(label='Wildcard Mask', max_length=100)
-    ospf_area = forms.CharField(label='OSPF Area', max_length=50)
+    secret = forms.CharField(label='Enable Secret', widget=forms.PasswordInput)
+    process_id = forms.CharField(label='OSPF Process ID', max_length=10)
+    network = forms.CharField(label='OSPF Network', max_length=100)
+    wildcard_mask = forms.CharField(label='Wildcard Mask', max_length=100)
+    area = forms.CharField(label='OSPF Area', max_length=10)
 
 class IPSecConfigForm(forms.Form):
     ip = forms.CharField(label='Device IP Address', max_length=100)
