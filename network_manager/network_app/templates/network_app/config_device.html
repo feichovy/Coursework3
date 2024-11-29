@@ -14,7 +14,34 @@
         <div class="card shadow p-4">
             <form method="post">
                 {% csrf_token %}
-                {{ form.as_p }}
+                <div class="form-group">
+                    <label for="id_ip">Device IP Address</label>
+                    <input type="text" name="ip" class="form-control" id="id_ip" placeholder="e.g., 192.168.1.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="id_username">Username</label>
+                    <input type="text" name="username" class="form-control" id="id_username" placeholder="e.g., admin" required>
+                </div>
+                <div class="form-group">
+                    <label for="id_password">Password</label>
+                    <input type="password" name="password" class="form-control" id="id_password" placeholder="e.g., password123" required>
+                </div>
+                <div class="form-group">
+                    <label for="id_secret">Enable Secret</label>
+                    <input type="password" name="secret" class="form-control" id="id_secret" placeholder="e.g., enable_secret" required>
+                </div>
+                <div class="form-group">
+                    <label for="id_interface">Interface</label>
+                    <input type="text" name="interface" class="form-control" id="id_interface" placeholder="e.g., Loopback0 or GigabitEthernet1" required>
+                </div>
+                <div class="form-group">
+                    <label for="id_ip_addr">Interface IP Address</label>
+                    <input type="text" name="ip_addr" class="form-control" id="id_ip_addr" placeholder="e.g., 10.0.0.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="id_mask">Subnet Mask</label>
+                    <input type="text" name="mask" class="form-control" id="id_mask" placeholder="e.g., 255.255.255.0" required>
+                </div>
                 <button type="submit" class="btn btn-primary btn-block mt-3">Submit Configuration</button>
             </form>
         </div>
