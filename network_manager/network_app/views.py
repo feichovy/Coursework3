@@ -119,20 +119,16 @@ def config_ospf(request):
         with open(CONFIG_FILE_PATH, 'r') as f:
             config = json.load(f)
 
-    # 获取设备信息或设置为空字典
-    device_ip = config.get('ip', '')
-    enable_secret = config.get('secret', '')
-
     # 初始化表单默认值
     initial_data = {
-        'device_ip': device_ip,
-        'username': config.get('username', 'admin'),  # 取默认值为 'admin'
-        'password': config.get('password', 'defaultpassword'),
-        'enable_secret': enable_secret,
-        'ospf_process_id': '1',
-        'ospf_network': '192.168.56.0',
-        'wildcard_mask': '0.0.0.255',
-        'ospf_area': '0',
+        'device_ip': config.get('ip', '192.168.56.104'),  # 默认值为 192.168.56.104
+        'username': config.get('username', 'admin'),      # 默认值为 'admin'
+        'password': config.get('password', 'defaultpassword'),  # 默认值为 'defaultpassword'
+        'enable_secret': config.get('secret', ''),        # 默认值为空字符串
+        'ospf_process_id': '1',                           # 默认 OSPF Process ID 为 1
+        'ospf_network': '192.168.56.0',                   # 默认网络地址为 192.168.56.0
+        'wildcard_mask': '0.0.0.255',                     # 默认 Wildcard Mask 为 0.0.0.255
+        'ospf_area': '0',                                 # 默认 Area 为 0
     }
 
     if request.method == 'POST':
@@ -182,7 +178,6 @@ def config_ospf(request):
         form = OSPFConfigForm(initial=initial_data)
 
     return render(request, 'network_app/config_ospf.html', {'form': form})
-
 def config_ipsec(request):
     # 读取配置文件
     config = read_config(CONFIG_FILE_PATH)
