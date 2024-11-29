@@ -25,5 +25,3 @@ urlpatterns = [
     path('config_ipsec/', views.config_ipsec, name='config_ipsec'),
     path('config_acl/', views.config_acl, name='config_acl'),
 ]
-)),
-]
