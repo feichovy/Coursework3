@@ -16,8 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.http import HttpResponse
+
+# 定义一个简单的视图，作为根路径的响应
+def home(request):
+    return HttpResponse("Welcome to the Network Manager Project. Use /network_app/config_device/ to configure a device.")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', home, name='home'),  # 添加根路径的 URL 路由
     path('network_app/', include('network_app.urls')),
 ]
