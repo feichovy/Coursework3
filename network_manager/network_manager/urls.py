@@ -14,14 +14,10 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path
-from . import views
+from django.contrib import admin
+from django.urls import include, path
 
 urlpatterns = [
-    path('', views.welcome, name='home'),  # 根路径对应 Welcome 主页面
-    path('welcome/', views.welcome, name='welcome'),  # 添加一个路径 'welcome/'，也能访问 Welcome 页面
-    path('config_device/', views.config_device, name='config_device'),
-    path('config_ospf/', views.config_ospf, name='config_ospf'),
-    path('config_ipsec/', views.config_ipsec, name='config_ipsec'),
-    path('config_acl/', views.config_acl, name='config_acl'),
+    path('admin/', admin.site.urls),
+    path('network_app/', include('network_app.urls')),  # 正确包含 network_app 应用的 URLs
 ]
