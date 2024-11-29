@@ -1,0 +1,13 @@
+{
+    "devices": [
+        {
+            "name": "default_device",
+            "ip": "192.168.56.104",
+            "username": "admin",
+            "password": "0428",
+            "connection_type": "ssh",
+            "secret": "0428",
+            "interface_ip": "22"
+        }
+    ]
+}
