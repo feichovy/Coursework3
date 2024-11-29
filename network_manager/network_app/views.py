@@ -112,7 +112,7 @@ def config_device(request):
 
     return render(request, 'network_app/config_device.html', {'form': form})
 
-def config_ospf_view(request):
+def config_ospf(request):
     # 假设配置文件路径为 config.json
     config_file_path = 'config.json'
     config_data = {}
