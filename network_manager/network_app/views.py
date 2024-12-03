@@ -116,7 +116,7 @@ def config_device(request):
 def config_ospf(request):
     file_path = 'network_app/config.json'
     config = read_config(file_path)
-
+    print(config)
     if request.method == 'POST':
         form = OSPFConfigForm(request.POST)
         if form.is_valid():
