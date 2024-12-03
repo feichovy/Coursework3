@@ -21,7 +21,7 @@ def read_config(file_path):
             'devices': [
                 {
                     'name': 'default_device',
-                    'ip': '192.168.56.103',
+                    'ip': '192.168.56.102',
                     'username': 'admin',
                     'password': '0428',
                     'connection_type': 'ssh',
@@ -80,7 +80,8 @@ def config_device(request):
             commands = [
                 f"interface {interface}",
                 f"ip address {ip_addr} {mask}",
-                "no shutdown"
+                "no shutdown",
+                "exit"
             ]
 
             try:
@@ -158,7 +159,11 @@ def config_ospf(request):
             'ip': config['devices'][0]['ip'],
             'username': config['devices'][0]['username'],
             'password': config['devices'][0]['password'],
-            'secret': config['devices'][0]['secret']
+            'secret': config['devices'][0]['secret'],
+            'process_id': '1',
+            'network': '192.168.56.0',
+            'wildcard_mask': '0.0.0.255',
+            'area': '0'
         })
 
     return render(request, 'network_app/config_ospf.html', {'form': form})
