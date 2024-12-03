@@ -108,7 +108,8 @@ def config_device(request):
             'ip': device['ip'],
             'username': device['username'],
             'password': device['password'],
-            'secret': device['secret']
+            'secret': device['secret'],
+            'interface': 'GigabitEthernet1'
         })
 
     return render(request, 'network_app/config_device.html', {'form': form})
