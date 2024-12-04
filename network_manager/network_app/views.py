@@ -91,7 +91,7 @@ def config_device(request):
                 connection.disconnect()
 
                 # 更新设备的 IP 地址到配置文件中的 'ip' 字段
-                device['ip'] = ip_addr
+                config['devices'][0]['ip'] = ip_addr
                 with open(CONFIG_FILE_PATH, 'w') as file:
                     json.dump(config, file, indent=4)
 
@@ -248,13 +248,13 @@ def config_acl(request):
             secret = form.cleaned_data['secret']
             acl_number = form.cleaned_data['acl_number']
             action = form.cleaned_data['action']
-            protocol = form.cleaned_data['protocol']
-            source = form.cleaned_data['source']
-            destination = form.cleaned_data['destination']
+            acl_interface = form.cleaned_data['acl_interface']
+            target_ip = form.cleaned_data['target_ip']
+            mask = form.cleaned_data['mask']
 
             # 配置 ACL 的命令
             commands = [
-                f"access-list {acl_number} {action} {protocol} {source} {destination}"
+                f"access-list {acl_number} {action} {target_ip} {mask}"
             ]
 
             # 使用 Netmiko 连接到设备进行配置

@@ -11,7 +11,7 @@ class DeviceConfigForm(forms.Form):
         label='Interface',
         choices=[
             ('GigabitEthernet1', 'GigabitEthernet1'),
-            ('loopback', 'loopback')
+            ('loopback0', 'loopback')
         ]
     )
     ip_addr = forms.CharField(label='Interface IP Address', max_length=100)
@@ -42,6 +42,9 @@ class ACLConfigForm(forms.Form):
     secret = forms.CharField(label='Enable Secret', max_length=100, widget=forms.PasswordInput(render_value=True))
     acl_number = forms.CharField(label='ACL Number', max_length=50)
     acl_action = forms.CharField(label='Action (permit/deny)', max_length=10)
-    acl_protocol = forms.CharField(label='Protocol (ip/tcp/udp)', max_length=10)
-    acl_source = forms.CharField(label='Source Address', max_length=100)
-    acl_destination = forms.CharField(label='Destination Address', max_length=100)
+    acl_interface = forms.ChoiceField(
+        label='Interface',
+        choices=[
+            ('GigabitEthernet1', 'GigabitEthernet1'),
+            ('loopback0', 'loopback')
+        ])
