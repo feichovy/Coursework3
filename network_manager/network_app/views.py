@@ -111,6 +111,7 @@ def config_device(request):
                     messages.success(request, f"Interface Configuration successful.")
                 except Exception as e:
                     messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
+
         else:
             messages.error(request, "Form data is invalid. Please check your inputs.")
 
