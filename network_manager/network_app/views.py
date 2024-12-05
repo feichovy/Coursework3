@@ -55,6 +55,8 @@ def config_device(request):
 
             try:
                 connection = ConnectHandler(**network_device)
+                connection.enable()
+                connection.config_mode()
                 output = connection.send_config_set(commands)
                 connection.disconnect()
 
