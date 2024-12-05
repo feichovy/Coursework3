@@ -86,16 +86,15 @@ def config_device(request):
                 "no shutdown"  # 确保 'no shutdown' 是正常字符串
             ]
 
-            # 打印要发送的命令列表，用于调试
-            print(f"Commands to be sent: {commands}")
-
             try:
+                # 尝试连接到设备
                 connection = ConnectHandler(**network_device)
                 connection.enable()
-                connection.send_command("configure terminal")
-                connection.send_command(f"interface {interface}")
-                connection.send_command(f"ip address {ip_addr} {mask}")
-                connection.send_command("no shutdown")
+
+                # 使用 send_config_set 而不是逐条 send_command
+                output = connection.send_config_set(commands)
+
+                # 断开连接
                 connection.disconnect()
 
                 # 设备配置成功后的反馈信息
@@ -112,11 +111,15 @@ def config_device(request):
                 except Exception as e:
                     messages.error(request, f"[ERROR] Failed to update configuration file: {str(e)}")
 
+            except NetMikoTimeoutException:
+                messages.error(request, "[ERROR] Connection timed out. Please check the device connectivity.")
+            except NetMikoAuthenticationException:
+                messages.error(request, "[ERROR] Authentication failed. Please check your credentials.")
             except Exception as e:
                 messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
         else:
             messages.error(request, "Form data is invalid. Please check your inputs.")
-    else:
+        else:
         # 初始化表单，填充默认值
         form = DeviceConfigForm(initial={
             'ip': device['ip'],
@@ -246,6 +249,7 @@ def config_ipsec(request):
 
     return render(request, 'network_app/config_ipsec.html', {'form': form})
 
+
 def config_acl(request):
     # 读取配置文件
     config = read_config(CONFIG_FILE_PATH)
@@ -261,13 +265,16 @@ def config_acl(request):
             secret = form.cleaned_data['secret']
             acl_number = form.cleaned_data['acl_number']
             action = form.cleaned_data['action']
-            acl_interface = form.cleaned_data['acl_interface']
-            target_ip = form.cleaned_data['target_ip']
-            mask = form.cleaned_data['mask']
+            source_ip = form.cleaned_data['source_ip']
+            wildcard_mask = form.cleaned_data['wildcard_mask']
+            interface = form.cleaned_data['interface']
+            direction = form.cleaned_data['direction']  # 获取用户选择的方向
 
             # 配置 ACL 的命令
             commands = [
-                f"access-list {acl_number} {action} {target_ip} {mask}"
+                f"access-list {acl_number} {action} {source_ip} {wildcard_mask}",
+                f"interface {interface}",
+                f"ip access-group {acl_number} {direction}"
             ]
 
             # 使用 Netmiko 连接到设备进行配置
@@ -282,12 +289,18 @@ def config_acl(request):
             try:
                 connection = ConnectHandler(**network_device)
                 connection.enable()
+
+                # 发送配置命令集
                 output = connection.send_config_set(commands)
                 connection.disconnect()
 
                 # 成功后反馈给用户
                 messages.success(request, f"ACL Configuration successful: {output}")
 
+            except NetMikoTimeoutException:
+                messages.error(request, "[ERROR] Connection timed out. Please check the device connectivity.")
+            except NetMikoAuthenticationException:
+                messages.error(request, "[ERROR] Authentication failed. Please check your credentials.")
             except Exception as e:
                 messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
 

@@ -40,11 +40,24 @@ class ACLConfigForm(forms.Form):
     username = forms.CharField(label='Username', max_length=100)
     password = forms.CharField(label='Password', widget=forms.PasswordInput(render_value=True))
     secret = forms.CharField(label='Enable Secret', max_length=100, widget=forms.PasswordInput(render_value=True))
-    acl_number = forms.CharField(label='ACL Number', max_length=50)
-    acl_action = forms.CharField(label='Action (permit/deny)', max_length=10)
-    acl_interface = forms.ChoiceField(
+    acl_number = forms.IntegerField(label='ACL Number (1-99)', min_value=1, max_value=99)
+    action = forms.ChoiceField(
+        label='Action',
+        choices=[('permit', 'Permit'), ('deny', 'Deny')]
+    )
+    source_ip = forms.CharField(label='Source IP Address', max_length=100)
+    wildcard_mask = forms.CharField(label='Wildcard Mask', max_length=100)
+    interface = forms.ChoiceField(
         label='Interface',
         choices=[
-            ('g1', 'GigabitEthernet1'),
-            ('loopback0', 'loopback')
-        ])
+            ('GigabitEthernet1', 'GigabitEthernet1'),
+            ('Loopback0', 'Loopback0')
+        ]
+    )
+    direction = forms.ChoiceField(
+        label='Direction',
+        choices=[
+            ('in', 'Inbound'),
+            ('out', 'Outbound')
+        ]
+    )
