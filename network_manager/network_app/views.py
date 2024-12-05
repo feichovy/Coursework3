@@ -14,37 +14,6 @@ def welcome(request):
     return render(request, 'network_app/welcome.html')
 
 # 读取配置文件
-def read_config(file_path):
-    if not os.path.exists(file_path):
-        # 如果文件不存在，创建并写入默认配置
-        default_config = {
-            'devices': [
-                {
-                    'name': 'default_device',
-                    'ip': '192.168.56.102',
-                    'username': 'admin',
-                    'password': '0428',
-                    'connection_type': 'ssh',
-                    'secret': '0428'
-                }
-            ]
-        }
-        with open(file_path, 'w') as file:
-            json.dump(default_config, file, indent=4)
-        print(f"[INFO] Configuration file '{file_path}' has been created with default settings.")
-        return default_config
-
-    # 如果文件存在，读取文件内容
-    try:
-        with open(file_path, 'r') as file:
-            config = json.load(file)
-        return config
-
-    except json.JSONDecodeError as e:
-        print(f"[ERROR] Failed to read configuration from '{file_path}': {str(e)}")
-        return {}
-
-# 配置设备接口视图
 def config_device(request):
     # 读取配置文件
     config = read_config(CONFIG_FILE_PATH)
@@ -78,7 +47,7 @@ def config_device(request):
             }
 
             commands = [
-                f"int {interface}",
+                f"interface {interface}",
                 f"ip address {ip_addr} {mask}",
                 "no shutdown",
                 "exit"
@@ -86,19 +55,7 @@ def config_device(request):
 
             try:
                 connection = ConnectHandler(**network_device)
-                connection.enable()
-                connection.config_mode()
-                # 逐行发送配置命令
-                for command in commands:
-                    output = connection.send_command(command, expect_string=r"#")
-                    print(f"Command output: {output}")
-
-                    # 检查命令输出是否有错误
-                    if "Invalid input" in output:
-                        messages.error(request, f"[ERROR] Invalid command: {command}")
-                        connection.disconnect()
-                        return render(request, 'network_app/config_device.html', {'form': form})
-
+                output = connection.send_config_set(commands)
                 connection.disconnect()
 
                 # 更新设备的 IP 地址到配置文件中的 'ip' 字段
@@ -106,8 +63,7 @@ def config_device(request):
                 with open(CONFIG_FILE_PATH, 'w') as file:
                     json.dump(config, file, indent=4)
 
-                messages.success(request, f"Interface Configuration successful.")
-
+                messages.success(request, f"Interface Configuration successful: {output}")
             except Exception as e:
                 messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
 
@@ -120,11 +76,41 @@ def config_device(request):
             'ip': device['ip'],
             'username': device['username'],
             'password': device['password'],
-            'secret': device['secret'],
-            'interface': 'GigabitEthernet1'
+            'secret': device['secret']
         })
 
     return render(request, 'network_app/config_device.html', {'form': form})
+
+# 读取配置文件的函数
+def read_config(file_path):
+    if not os.path.exists(file_path):
+        # 如果文件不存在，创建并写入默认配置
+        default_config = {
+            'devices': [
+                {
+                    'name': 'default_device',
+                    'ip': '192.168.56.103',
+                    'username': 'admin',
+                    'password': '0428',
+                    'connection_type': 'ssh',
+                    'secret': '0428'
+                }
+            ]
+        }
+        with open(file_path, 'w') as file:
+            json.dump(default_config, file, indent=4)
+        print(f"[INFO] Configuration file '{file_path}' has been created with default settings.")
+        return default_config
+
+    # 如果文件存在，读取文件内容
+    try:
+        with open(file_path, 'r') as file:
+            config = json.load(file)
+        return config
+
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Failed to read configuration from '{file_path}': {str(e)}")
+        return {}
 
 def config_ospf(request):
     file_path = 'network_app/config.json'
