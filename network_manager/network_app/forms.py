@@ -45,6 +45,6 @@ class ACLConfigForm(forms.Form):
     acl_interface = forms.ChoiceField(
         label='Interface',
         choices=[
-            ('GigabitEthernet1', 'GigabitEthernet1'),
+            ('g1', 'GigabitEthernet1'),
             ('loopback0', 'loopback')
         ])
