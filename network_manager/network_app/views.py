@@ -87,7 +87,7 @@ def config_device(request):
             try:
                 connection = ConnectHandler(**network_device)
                 connection.enable()
-
+                connection.config_mode()
                 # 逐行发送配置命令
                 for command in commands:
                     output = connection.send_command(command, expect_string=r"#")
