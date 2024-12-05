@@ -82,8 +82,7 @@ def config_device(request):
             # 配置命令
             commands = [
                 f"interface {interface}",
-                f"ip address {ip_addr} {mask}",
-                "no shutdown"  # 确保 'no shutdown' 是正常字符串
+                f"ip address {ip_addr} {mask}"
             ]
 
             try:
