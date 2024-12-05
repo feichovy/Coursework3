@@ -92,6 +92,7 @@ def config_device(request):
             try:
                 connection = ConnectHandler(**network_device)
                 connection.enable()
+                connection.send_command("configure terminal")
                 connection.send_command(f"interface {interface}")
                 connection.send_command(f"ip address {ip_addr} {mask}")
                 connection.send_command("no shutdown")
