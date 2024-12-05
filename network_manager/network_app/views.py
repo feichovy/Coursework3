@@ -111,10 +111,6 @@ def config_device(request):
                 except Exception as e:
                     messages.error(request, f"[ERROR] Failed to update configuration file: {str(e)}")
 
-            except NetMikoTimeoutException:
-                messages.error(request, "[ERROR] Connection timed out. Please check the device connectivity.")
-            except NetMikoAuthenticationException:
-                messages.error(request, "[ERROR] Authentication failed. Please check your credentials.")
             except Exception as e:
                 messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
         else:
@@ -299,10 +295,6 @@ def config_acl(request):
                 # 成功后反馈给用户
                 messages.success(request, f"ACL Configuration successful: {output}")
 
-            except NetMikoTimeoutException:
-                messages.error(request, "[ERROR] Connection timed out. Please check the device connectivity.")
-            except NetMikoAuthenticationException:
-                messages.error(request, "[ERROR] Authentication failed. Please check your credentials.")
             except Exception as e:
                 messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
 
