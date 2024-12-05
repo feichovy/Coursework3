@@ -193,21 +193,23 @@ def config_ipsec(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             secret = form.cleaned_data['secret']
+            crypto_map = form.cleaned_data['crypto_map']
             isakmp_policy = form.cleaned_data['isakmp_policy']
-            transform_set = form.cleaned_data['transform_set']
-            peer_ip = form.cleaned_data['peer_ip']
-            acl_number = form.cleaned_data['acl_number']
 
             # 配置 IPSec 的命令
             commands = [
                 f"crypto isakmp policy {isakmp_policy}",
-                f"crypto ipsec transform-set {transform_set} esp-aes esp-sha-hmac",
-                f"crypto map MYMAP 10 ipsec-isakmp",
-                f"set peer {peer_ip}",
-                f"set transform-set {transform_set}",
-                f"match address {acl_number}",
+                "encryption aes",  # 使用默认的 AES 加密
+                "hash sha",  # 使用默认的 SHA 散列
+                "authentication pre-share",  # 预共享密钥认证
+                "group 2",  # 默认使用 Diffie-Hellman Group 2
+                f"crypto ipsec transform-set MY_TRANSFORM esp-aes esp-sha-hmac",
+                f"crypto map {crypto_map} 10 ipsec-isakmp",
+                "set peer 192.168.56.1",  # 示例的对等点 IP
+                "set transform-set MY_TRANSFORM",
+                "match address 101",  # 示例 ACL 匹配
                 "interface GigabitEthernet0/0",
-                "crypto map MYMAP"
+                f"crypto map {crypto_map}"
             ]
 
             # 使用 Netmiko 连接到设备进行配置

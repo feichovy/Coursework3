@@ -33,7 +33,7 @@ class IPSecConfigForm(forms.Form):
     password = forms.CharField(label='Password', widget=forms.PasswordInput(render_value=True))
     secret = forms.CharField(label='Enable Secret', max_length=100, widget=forms.PasswordInput(render_value=True))
     crypto_map = forms.CharField(label='Crypto Map Name', max_length=100)
-    isakmp_policy = forms.CharField(label='ISAKMP Policy', max_length=100)
+    isakmp_policy = forms.IntegerField(label='ISAKMP Policy Number', min_value=1, max_value=100)  # 简单为数字
 
 class ACLConfigForm(forms.Form):
     ip = forms.CharField(label='Device IP Address', max_length=100)
