@@ -14,6 +14,37 @@ def welcome(request):
     return render(request, 'network_app/welcome.html')
 
 # 读取配置文件
+def read_config(file_path):
+    if not os.path.exists(file_path):
+        # 如果文件不存在，创建并写入默认配置
+        default_config = {
+            'devices': [
+                {
+                    'name': 'default_device',
+                    'ip': '192.168.56.102',
+                    'username': 'admin',
+                    'password': '0428',
+                    'connection_type': 'ssh',
+                    'secret': '0428'
+                }
+            ]
+        }
+        with open(file_path, 'w') as file:
+            json.dump(default_config, file, indent=4)
+        print(f"[INFO] Configuration file '{file_path}' has been created with default settings.")
+        return default_config
+
+    # 如果文件存在，读取文件内容
+    try:
+        with open(file_path, 'r') as file:
+            config = json.load(file)
+        return config
+
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Failed to read configuration from '{file_path}': {str(e)}")
+        return {}
+
+# 配置设备接口视图
 def config_device(request):
     # 读取配置文件
     config = read_config(CONFIG_FILE_PATH)
@@ -43,75 +74,56 @@ def config_device(request):
                 'host': ip,
                 'username': username,
                 'password': password,
-                'secret': secret
+                'secret': secret,
+                'timeout': 100,  # 增加超时时间
+                'session_log': 'session_log.txt'  # 启用会话日志
             }
 
+            # 配置命令
             commands = [
                 f"interface {interface}",
                 f"ip address {ip_addr} {mask}",
+                "no shutdown"  # 确保 'no shutdown' 是正常字符串
             ]
+
+            # 打印要发送的命令列表，用于调试
+            print(f"Commands to be sent: {commands}")
 
             try:
                 connection = ConnectHandler(**network_device)
                 connection.enable()
-                connection.config_mode()
-                output = connection.send_config_set(commands)
+                output = connection.send_config_set(commands, delay_factor=2)  # 增加延迟因子
                 connection.disconnect()
 
-                # 更新设备的 IP 地址到配置文件中的 'ip' 字段
-                config['devices'][0]['ip'] = ip_addr
-                with open(CONFIG_FILE_PATH, 'w') as file:
-                    json.dump(config, file, indent=4)
-
+                # 设备配置成功后的反馈信息
                 messages.success(request, f"Interface Configuration successful: {output}")
+
+                # 在设备配置成功后更新配置文件
+                try:
+                    # 更新设备的 IP 地址到配置文件中的 'ip' 字段
+                    config['devices'][0]['ip'] = ip_addr
+                    with open(CONFIG_FILE_PATH, 'w') as file:
+                        json.dump(config, file, indent=4)
+
+                    messages.success(request, f"Configuration file updated successfully with new IP: {ip_addr}")
+                except Exception as e:
+                    messages.error(request, f"[ERROR] Failed to update configuration file: {str(e)}")
+
             except Exception as e:
                 messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
-
         else:
             messages.error(request, "Form data is invalid. Please check your inputs.")
-
     else:
         # 初始化表单，填充默认值
         form = DeviceConfigForm(initial={
             'ip': device['ip'],
             'username': device['username'],
             'password': device['password'],
-            'secret': device['secret']
+            'secret': device['secret'],
+            'interface': 'GigabitEthernet1'
         })
 
     return render(request, 'network_app/config_device.html', {'form': form})
-
-# 读取配置文件的函数
-def read_config(file_path):
-    if not os.path.exists(file_path):
-        # 如果文件不存在，创建并写入默认配置
-        default_config = {
-            'devices': [
-                {
-                    'name': 'default_device',
-                    'ip': '192.168.56.103',
-                    'username': 'admin',
-                    'password': '0428',
-                    'connection_type': 'ssh',
-                    'secret': '0428'
-                }
-            ]
-        }
-        with open(file_path, 'w') as file:
-            json.dump(default_config, file, indent=4)
-        print(f"[INFO] Configuration file '{file_path}' has been created with default settings.")
-        return default_config
-
-    # 如果文件存在，读取文件内容
-    try:
-        with open(file_path, 'r') as file:
-            config = json.load(file)
-        return config
-
-    except json.JSONDecodeError as e:
-        print(f"[ERROR] Failed to read configuration from '{file_path}': {str(e)}")
-        return {}
-
 def config_ospf(request):
     file_path = 'network_app/config.json'
     config = read_config(file_path)
