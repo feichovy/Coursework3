@@ -88,29 +88,29 @@ def config_device(request):
                     "no shutdown"
                 ]
 
-                for command in commands:
-                    output = connection.send_command(command, expect_string=r"\(config-if\)#|#")
-                    print(f"Command output: {output}")
-
-                # 退出接口配置模式
-                output = connection.send_command("exit", expect_string=r"#")
-                print(f"Exit command output: {output}")
-
-                connection.disconnect()
-
-                # 更新设备的 IP 地址到配置文件中的 'ip' 字段
                 try:
+                    connection = ConnectHandler(**network_device)
+                    connection.enable()
+
+                    # 逐行发送配置命令
+                    for command in commands:
+                        output = connection.send_command(command, expect_string=r"#")
+                        print(f"Command output: {output}")
+
+                    # 退出接口配置模式
+                    output = connection.send_command("exit", expect_string=r"#")
+                    print(f"Exit command output: {output}")
+
+                    connection.disconnect()
+
+                    # 更新设备的 IP 地址到配置文件中的 'ip' 字段
                     config['devices'][0]['ip'] = ip_addr
                     with open(CONFIG_FILE_PATH, 'w') as file:
                         json.dump(config, file, indent=4)
-                    messages.success(request, f"Configuration file updated successfully with new IP: {ip_addr}")
+
+                    messages.success(request, f"Interface Configuration successful.")
                 except Exception as e:
-                    messages.error(request, f"[ERROR] Failed to update configuration file: {str(e)}")
-
-                messages.success(request, f"Interface Configuration successful.")
-            except Exception as e:
-                messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
-
+                    messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
         else:
             messages.error(request, "Form data is invalid. Please check your inputs.")
 
