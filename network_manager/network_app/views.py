@@ -49,8 +49,6 @@ def config_device(request):
             commands = [
                 f"interface {interface}",
                 f"ip address {ip_addr} {mask}",
-                "no shutdown",
-                "exit"
             ]
 
             try:
