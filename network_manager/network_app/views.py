@@ -92,7 +92,9 @@ def config_device(request):
             try:
                 connection = ConnectHandler(**network_device)
                 connection.enable()
-                output = connection.send_config_set(commands, delay_factor=2)  # 增加延迟因子
+                connection.send_command(f"interface {interface}", expect_string=r"\(config-if\)#")
+                connection.send_command(f"ip address {ip_addr} {mask}", expect_string="\(config-if\)#")
+                connection.send_command("no shutdown", expect_string="\(config-if\)#")
                 connection.disconnect()
 
                 # 设备配置成功后的反馈信息
