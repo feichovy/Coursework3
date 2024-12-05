@@ -88,18 +88,16 @@ def config_device(request):
             try:
                 # 尝试连接到设备
                 connection = ConnectHandler(**network_device)
-                connection.enable()
-
-                # 使用 send_config_set 而不是逐条 send_command
+                prompt = connection.find_prompt()
+                print(f"Device prompt: {prompt}")
+                if not connection.check_enable_mode():
+                    connection.enable()
+                if not connection.check_config_mode():
+                    connection.config_mode()
                 output = connection.send_config_set(commands)
-
-                # 断开连接
                 connection.disconnect()
-
                 # 设备配置成功后的反馈信息
                 messages.success(request, f"Interface Configuration successful: {output}")
-
-                # 在设备配置成功后更新配置文件
                 try:
                     # 更新设备的 IP 地址到配置文件中的 'ip' 字段
                     config['devices'][0]['ip'] = ip_addr
