@@ -93,8 +93,8 @@ def config_device(request):
                 connection = ConnectHandler(**network_device)
                 connection.enable()
                 connection.send_command(f"interface {interface}", expect_string=r"\(config-if\)#")
-                connection.send_command(f"ip address {ip_addr} {mask}", expect_string="\(config-if\)#")
-                connection.send_command("no shutdown", expect_string="\(config-if\)#")
+                connection.send_command(f"ip address {ip_addr} {mask}")
+                connection.send_command("no shutdown")
                 connection.disconnect()
 
                 # 设备配置成功后的反馈信息
