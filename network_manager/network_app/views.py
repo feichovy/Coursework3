@@ -68,7 +68,7 @@ def config_device(request):
             ip_addr = form.cleaned_data['ip_addr']
             mask = form.cleaned_data['mask']
 
-            # 使用 Netmiko 连接到设备并逐行配置接口
+            # 使用 Netmiko 连接到设备并配置接口
             network_device = {
                 'device_type': 'cisco_ios',
                 'host': ip,
@@ -77,40 +77,39 @@ def config_device(request):
                 'secret': secret
             }
 
+            commands = [
+                f"interface {interface}",
+                f"ip address {ip_addr} {mask}",
+                "no shutdown",
+                "exit"
+            ]
+
             try:
                 connection = ConnectHandler(**network_device)
                 connection.enable()
 
                 # 逐行发送配置命令
-                commands = [
-                    f"interface {interface}",
-                    f"ip address {ip_addr} {mask}",
-                    "no shutdown"
-                ]
+                for command in commands:
+                    output = connection.send_command(command, expect_string=r"#")
+                    print(f"Command output: {output}")
 
-                try:
-                    connection = ConnectHandler(**network_device)
-                    connection.enable()
+                    # 检查命令输出是否有错误
+                    if "Invalid input" in output:
+                        messages.error(request, f"[ERROR] Invalid command: {command}")
+                        connection.disconnect()
+                        return render(request, 'network_app/config_device.html', {'form': form})
 
-                    # 逐行发送配置命令
-                    for command in commands:
-                        output = connection.send_command(command, expect_string=r"#")
-                        print(f"Command output: {output}")
+                connection.disconnect()
 
-                    # 退出接口配置模式
-                    output = connection.send_command("exit", expect_string=r"#")
-                    print(f"Exit command output: {output}")
+                # 更新设备的 IP 地址到配置文件中的 'ip' 字段
+                config['devices'][0]['ip'] = ip_addr
+                with open(CONFIG_FILE_PATH, 'w') as file:
+                    json.dump(config, file, indent=4)
 
-                    connection.disconnect()
+                messages.success(request, f"Interface Configuration successful.")
 
-                    # 更新设备的 IP 地址到配置文件中的 'ip' 字段
-                    config['devices'][0]['ip'] = ip_addr
-                    with open(CONFIG_FILE_PATH, 'w') as file:
-                        json.dump(config, file, indent=4)
-
-                    messages.success(request, f"Interface Configuration successful.")
-                except Exception as e:
-                    messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
+            except Exception as e:
+                messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
 
         else:
             messages.error(request, "Form data is invalid. Please check your inputs.")
@@ -126,6 +125,7 @@ def config_device(request):
         })
 
     return render(request, 'network_app/config_device.html', {'form': form})
+
 def config_ospf(request):
     file_path = 'network_app/config.json'
     config = read_config(file_path)
