@@ -10,7 +10,7 @@ class DeviceConfigForm(forms.Form):
     interface = forms.ChoiceField(
         label='Interface',
         choices=[
-            ('g1', 'GigabitEthernet1'),
+            ('GigabitEthernet1', 'GigabitEthernet1'),
             ('loopback0', 'loopback')
         ]
     )
