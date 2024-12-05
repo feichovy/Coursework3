@@ -119,8 +119,9 @@ def config_device(request):
                 messages.error(request, f"[ERROR] Could not connect to the router: {str(e)}")
         else:
             messages.error(request, "Form data is invalid. Please check your inputs.")
-        else:
-        # 初始化表单，填充默认值
+
+    # 初始化表单，填充默认值（非 POST 请求的情况）
+    else:
         form = DeviceConfigForm(initial={
             'ip': device['ip'],
             'username': device['username'],
@@ -130,6 +131,7 @@ def config_device(request):
         })
 
     return render(request, 'network_app/config_device.html', {'form': form})
+
 def config_ospf(request):
     file_path = 'network_app/config.json'
     config = read_config(file_path)
